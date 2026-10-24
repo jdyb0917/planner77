@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <title>やるべきこと</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+1+Code&family=Zen+Maru+Gothic&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- 표지 -->
+  <div id="cover" class="cover" role="button" tabindex="0" aria-label="スタート">
+    <div class="cover-inner">
+      <div class="cover-line1">
+        <span class="cover-a">泣けないうちに</span>
+        <span class="cover-sa">さぁ</span>
+        <span class="cover-hora">ほら</span>
+      </div>
+      <div class="cover-main">やるべきことをやろう</div>
+      <div class="cover-hint">クリックしてスタート</div>
+    </div>
+  </div>
+
+  <!-- 메인 -->
+  <main id="app" class="app">
+    <header class="head">
+      <div class="head-left">
+        <div id="date" class="date"></div>
+        <h1 id="title" class="title"></h1>
+      </div>
+      <nav class="arrows">
+        <button id="prev" class="arrow arrow-prev" aria-label="前の日"></button>
+        <button id="next" class="arrow arrow-next" aria-label="次の日"></button>
+      </nav>
+    </header>
+
+    <section class="block">
+      <div id="timed" class="list"></div>
+      <button id="addTimed" class="add" aria-label="時間の予定を追加"></button>
+    </section>
+
+    <section class="block block-todo">
+      <div id="todos" class="list"></div>
+      <button id="addTodo" class="add" aria-label="やることを追加"></button>
+    </section>
+
+    <footer class="sync">
+      <button id="syncBtn" class="sync-btn" type="button"></button>
+    </footer>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
