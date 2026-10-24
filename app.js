@@ -367,7 +367,6 @@ function hideCover() {
 }
 let started = false;
 try { started = sessionStorage.getItem('yarubeki:started') === '1'; } catch (e) { /* ignore */ }
-if (started) els.cover.classList.add('hide');
 els.cover.addEventListener('click', hideCover);
 els.cover.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') hideCover(); });
 
