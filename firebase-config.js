@@ -6,7 +6,7 @@
 // (이 값들은 공개되어도 괜찮은 값입니다. 데이터는 보안 규칙으로 보호됩니다.)
 // ─────────────────────────────────────────────────────────────
    export const firebaseConfig = {
-     apiKey: "AIzaSy...",
+     apiKey: "AIzaSyB1byoIGw6UxSbXQsJYyBSH6Dz9NDqMfEQ",
      authDomain: "planner77.firebaseapp.com",
      projectId: "planner77",
      storageBucket: "planner77.firebasestorage.app",
