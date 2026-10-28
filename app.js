@@ -124,12 +124,15 @@ function rowShell(id) {
   const row = document.createElement('div');
   row.className = 'row';
   row.dataset.id = id;
-  const bg = document.createElement('div');
-  bg.className = 'row-bg';
-  bg.textContent = '削除';
+  const del = document.createElement('div');
+  del.className = 'row-bg bg-del';
+  del.textContent = '削除';
+  const post = document.createElement('div');
+  post.className = 'row-bg bg-post';
+  post.textContent = '明日へ →';
   const content = document.createElement('div');
   content.className = 'row-content';
-  row.append(bg, content);
+  row.append(del, post, content);
   return { row, content };
 }
 
@@ -168,7 +171,7 @@ function timedRow(key, it) {
   });
 
   content.append(time, text);
-  attachSwipe(row, () => removeItem(key, 'timed', it.id));
+  attachSwipe(row, () => removeItem(key, 'timed', it.id), () => postponeItem(key, 'timed', it.id));
   return row;
 }
 
@@ -196,7 +199,7 @@ function todoRow(key, it) {
   });
 
   content.append(check, text);
-  attachSwipe(row, () => removeItem(key, 'todos', it.id));
+  attachSwipe(row, () => removeItem(key, 'todos', it.id), () => postponeItem(key, 'todos', it.id));
   return row;
 }
 
@@ -258,18 +261,39 @@ function removeItem(key, listName, id) {
   commit(key);
 }
 
+/* 보고 있는 날의 다음 날로 항목을 옮김 */
+function postponeItem(key, listName, id) {
+  const day = ensureDay(key);
+  const item = day[listName].find((x) => x.id === id);
+  if (!item) return;
+  day[listName] = day[listName].filter((x) => x.id !== id);
+  commit(key);
+
+  const [y, m, d] = key.split('-').map(Number);
+  const nextKey = keyOf(new Date(y, m - 1, d + 1));
+  const next = ensureDay(nextKey);
+  const moved = { ...item, id: newId() };
+  if (listName === 'todos') moved.done = false;
+  // 다음 날의 빈 칸(템플릿 그대로인 빈 줄)은 정리하고 넣기
+  next[listName] = next[listName].filter((x) => (x.text || '').trim() !== '');
+  next[listName].push(moved);
+  if (listName === 'timed') next.timed.sort((a, b) => toMin(a.time) - toMin(b.time));
+  commit(nextKey);
+}
+
 /* ============================================================
-   오른쪽 → 왼쪽 스와이프 삭제
+   스와이프: 오른쪽 → 왼쪽 = 삭제 / 왼쪽 → 오른쪽 = 다음 날로 미루기
    ============================================================ */
-function attachSwipe(row, onDelete) {
+function attachSwipe(row, onDelete, onPostpone) {
   const content = row.querySelector('.row-content');
   let startX = null, startY = 0, dx = 0, pid = null;
   let decided = false, dragging = false;
   const threshold = () => Math.min(120, row.offsetWidth * 0.35);
 
+  const clear = () => row.classList.remove('swiping-left', 'swiping-right', 'armed');
   const reset = () => {
     startX = null; decided = false; dragging = false; pid = null;
-    row.classList.remove('swiping', 'armed');
+    clear();
     document.body.classList.remove('dragging');
   };
 
@@ -286,36 +310,37 @@ function attachSwipe(row, onDelete) {
     if (!decided) {
       if (Math.abs(mx) < 8 && Math.abs(my) < 8) return;
       decided = true;
-      dragging = mx < 0 && Math.abs(mx) > Math.abs(my);
+      dragging = Math.abs(mx) > Math.abs(my) && (mx < 0 || !!onPostpone);
       if (!dragging) { startX = null; return; }
       try { content.setPointerCapture(pid); } catch (err) { /* ignore */ }
       if (row.contains(document.activeElement)) document.activeElement.blur();
-      row.classList.add('swiping');
       document.body.classList.add('dragging');
     }
     if (!dragging) return;
     e.preventDefault();
-    dx = Math.min(0, mx);
+    dx = onPostpone ? mx : Math.min(0, mx);
     content.style.transform = `translateX(${dx}px)`;
-    row.classList.toggle('armed', -dx > threshold());
+    row.classList.toggle('swiping-left', dx < 0);
+    row.classList.toggle('swiping-right', dx > 0);
+    row.classList.toggle('armed', Math.abs(dx) > threshold());
   });
 
   const end = (e) => {
     if (startX === null || (e && e.pointerId !== pid)) return;
-    const wasDragging = dragging;
-    const shouldDelete = wasDragging && -dx > threshold();
+    const action = dragging && Math.abs(dx) > threshold() ? (dx < 0 ? onDelete : onPostpone) : null;
+    const side = dx < 0 ? 'swiping-left' : 'swiping-right';
     content.style.transition = 'transform .2s ease';
-    if (shouldDelete) {
-      content.style.transform = 'translateX(-110%)';
+    reset();
+    if (action) {
+      row.classList.add(side, 'armed');
+      content.style.transform = `translateX(${dx < 0 ? -110 : 110}%)`;
       setTimeout(() => {
         row.classList.add('removing');
-        setTimeout(() => { onDelete(); row.remove(); }, 200);
+        setTimeout(() => { action(); row.remove(); }, 200);
       }, 160);
     } else {
       content.style.transform = '';
     }
-    reset();
-    if (shouldDelete) row.classList.add('armed', 'swiping');
   };
   content.addEventListener('pointerup', end);
   content.addEventListener('pointercancel', end);
